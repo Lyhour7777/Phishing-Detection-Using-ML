@@ -1,0 +1,48 @@
+# requirements.in
+
+# Core Data Processing
+
+numpy
+pandas
+scikit-learn
+
+# Deep Learning / NLP
+
+torch
+transformers
+
+# API
+
+fastapi
+uvicorn[standard]
+pydantic
+
+# Web UI
+
+streamlit
+
+# Web Scraping
+
+requests
+beautifulsoup4
+lxml
+
+# Utilities
+
+python-dotenv
+tqdm
+
+# Testing
+
+pytest
+pytest-cov
+
+# Logging & Monitoring
+
+loguru
+
+# Optional: Jupyter and visualization
+
+jupyterlab
+matplotlib
+seaborn
