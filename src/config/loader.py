@@ -16,6 +16,7 @@ from src.config.types import TrainingMode
 class AppConfig:
     """Application metadata."""
     name: str
+    enable_logging: bool
 
 
 @dataclass

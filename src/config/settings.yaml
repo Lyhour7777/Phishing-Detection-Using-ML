@@ -1,5 +1,6 @@
 app:
   name: "Phishing Detection System"
+  enable_logging: true
 
 api:
   host: "0.0.0.0"
@@ -20,7 +21,7 @@ training:
   # Use either a single data file (CSV) or a folder with images
   data_file: "data/train.csv"
   data_dir: "data/train_images"
-  mode: "folder"        # Options: "file" or "folder"
+  mode: "file"        # Options: "file" or "folder"
   batch_size: 32
   epochs: 10
   learning_rate: 0.001

@@ -8,15 +8,19 @@ import pickle
 import pandas as pd
 
 from src.config.loader import Config
+from src.config.logger import get_logger
 from src.config.types import TrainingMode
 
 
 def train(config: Config, mode: TrainingMode | None = None):
     """Train phishing detection model using either a CSV file or a folder of images."""
+    logger = get_logger()
+    if isinstance(config.training.mode, str):
+        config.training.mode = TrainingMode(config.training.mode)
     if mode:
         config.training.mode = mode
 
-    print(f"[INFO] Training mode: {config.training.mode.value}")
+    logger.info(f"Training mode: {config.training.mode.value}")
 
     if config.training.mode == TrainingMode.FILE:
         # CSV file training
@@ -25,7 +29,7 @@ def train(config: Config, mode: TrainingMode | None = None):
             raise FileNotFoundError(f"{data_path} not found. Provide a valid CSV file.")
 
         df = pd.read_csv(data_path)
-        print(f"[INFO] Loaded {len(df)} rows for training from file.")
+        logger.info(f"Loaded {len(df)} rows for training from file.")
 
         phishing_count = (df["label"] == "phishing").sum()
         safe_count = (df["label"] == "safe").sum()
@@ -39,7 +43,7 @@ def train(config: Config, mode: TrainingMode | None = None):
             )
         # Dummy: count total image files
         image_files = list(data_dir.glob("**/*.*"))
-        print(f"[INFO] Found {len(image_files)} images for training in folder.")
+        logger.info(f"Found {len(image_files)} images for training in folder.")
         phishing_count = len(image_files) // 2  # dummy split
         safe_count = len(image_files) - phishing_count
 
@@ -50,7 +54,7 @@ def train(config: Config, mode: TrainingMode | None = None):
     batch_size = config.training.batch_size
     epochs = config.training.epochs
     lr = config.training.learning_rate
-    print(f"[INFO] Training model '{config.training.model_name}': "
+    logger.info(f"Training model '{config.training.model_name}': "
           f"batch_size={batch_size}, epochs={epochs}, lr={lr}")
     time.sleep(2)  # simulate training
 
@@ -63,7 +67,7 @@ def train(config: Config, mode: TrainingMode | None = None):
     with open(model_path, "wb") as f:
         pickle.dump(model_info, f)
 
-    print(f"[INFO] Saved model to {model_path}")
+    logger.info(f"Saved model to {model_path}")
 
 
 if __name__ == "__main__":

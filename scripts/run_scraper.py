@@ -6,10 +6,12 @@ from pathlib import Path
 import time
 import pandas as pd
 from src.config.loader import Config, load_config
+from src.config.logger import get_logger
 
 def scraper(config: Config):
     """Scrape phishing data."""
-    print("[INFO] Running scraper...", config)
+    logger = get_logger()
+    logger.info("Running scraper...")
     data_dir = Path(config.paths.data_dir)
     data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -20,7 +22,7 @@ def scraper(config: Config):
     df = pd.DataFrame(data)
     df.to_csv(data_dir / "sample_data.csv", index=False)
     time.sleep(1)
-    print(f"[INFO] Scraped {len(data)} entries and saved to {data_dir}")
+    logger.info(f"Scraped {len(data)} entries and saved to {data_dir}")
 
 if __name__ == "__main__":
     cfg = load_config("src/config/settings.yaml")
