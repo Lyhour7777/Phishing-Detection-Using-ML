@@ -71,14 +71,15 @@ def main(argv: list[str] | None = None) -> None:
         "--config-path", 
         type=str,
         default="src/config/settings.yaml",
-        help="Path to YAML config file"
+        help="Path to YAML config file",
+        metavar=""
     )
     parser.add_argument("--scraper", action="store_true", help="Run scraper")
     parser.add_argument("--train", action="store_true", help="Train model")
     parser.add_argument(
-        "--mode", 
-        type=TrainingMode, 
-        hoices=list(TrainingMode), 
+        "--mode",
+        type=str,
+        choices=[mode.value for mode in TrainingMode],
         help="Select training mode (file or folder)"
     )
     parser.add_argument("--evaluate", action="store_true", help="Evaluate model")

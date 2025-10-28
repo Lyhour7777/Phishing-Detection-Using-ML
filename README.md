@@ -68,8 +68,8 @@ phishing_detection/
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/phishing_detection.git
-cd phishing_detection
+git clone git@github.com:Lyhour7777/Phishing-Detection-Using-ML.git
+cd Phishing-Detection-Using-ML
 ```
 
 2. Install dependencies:
