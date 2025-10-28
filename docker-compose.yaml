@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    command: python run.py --api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - scraper
+
+  web:
+    build: .
+    command: python run.py --web
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      - api
+
+  scraper:
+    build: .
+    command: python run.py --scraper
+    volumes:
+      - .:/app

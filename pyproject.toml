@@ -1,0 +1,55 @@
+[project]
+name = "phishing-fraud-detection"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Team15"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # Core Data Processing
+    "numpy",
+    "pandas",
+    "scikit-learn",
+
+    # Deep Learning / NLP
+    "torch",
+    "transformers",
+
+    # API
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+
+    # Web UI
+    "streamlit",
+
+    # Web Scraping
+    "requests",
+    "beautifulsoup4",
+    "lxml",
+
+    # Utilities
+    "python-dotenv",
+    "tqdm",
+
+    # Logging & Monitoring
+    "loguru",
+
+    # Optional: Jupyter and visualization
+    "jupyterlab",
+    "matplotlib",
+    "seaborn"
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+pytest-cov = "^7.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

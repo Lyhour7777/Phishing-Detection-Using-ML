@@ -1,0 +1,27 @@
+app:
+  name: "Phishing Detection System"
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+
+web:
+  host: "0.0.0.0"
+  port: 8501
+
+paths:
+  data_dir: "data/"
+  model_dir: "models/"
+  logs_dir: "logs/"
+
+training:
+  model_name: "pfd"
+  # Use either a single data file (CSV) or a folder with images
+  data_file: "data/train.csv"
+  data_dir: "data/train_images"
+  mode: "folder"        # Options: "file" or "folder"
+  batch_size: 32
+  epochs: 10
+  learning_rate: 0.001
+  image_size: [128, 128]
