@@ -1,11 +1,14 @@
-# scripts/train.py
+"""training phishing"""
 from pathlib import Path
+import os
 import pandas as pd
 from src.config.loader import Config
 from src.config.logger import get_logger
 from src.models.model import HuggingFaceModel
 from src.config.types import TrainingMode
 from src.training.phishing_dataset import PhishingDataset
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def train(config: Config, mode: TrainingMode | None = None):
     """Train phishing detection model using CSV or folder data."""
@@ -36,7 +39,7 @@ def train(config: Config, mode: TrainingMode | None = None):
 
     # Check if a fine-tuned model already exists
     save_path = Path(config.training.save_model_dir) / config.training.model_name
-    fine_tuned_checkpoint = save_path if save_path.exists() else None
+    fine_tuned_checkpoint = get_latest_checkpoint(save_path)
     model.load(fine_tuned_checkpoint)
 
     # Tokenize dataset
@@ -53,3 +56,13 @@ def train(config: Config, mode: TrainingMode | None = None):
 
     # Fine-tune model, continue if checkpoint exists
     model.train(dataset=dataset, resume_checkpoint=fine_tuned_checkpoint)
+
+def get_latest_checkpoint(model_dir: Path) -> str | None:
+    """Return the latest checkpoint path if exists, otherwise None."""
+    if not model_dir.exists():
+        return None
+    checkpoints = sorted(
+        [p for p in model_dir.iterdir() if p.is_dir() and p.name.startswith("checkpoint-")],
+        key=lambda x: int(x.name.split("-")[1])
+    )
+    return str(checkpoints[-1]) if checkpoints else None

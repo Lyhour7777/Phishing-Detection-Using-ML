@@ -89,7 +89,7 @@ class ModelConfig:
             self.labels = {"safe": 0, "phishing": 1}
 
         # Optional: generate reverse mapping
-        self.id2label = {v: k for k, v in self.labels.items()}
+        self.id2label: Dict[int, str] = {v: k for k, v in self.labels.items()}
 
 @dataclass
 class Config:

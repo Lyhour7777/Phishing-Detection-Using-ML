@@ -34,7 +34,7 @@ training:
   data_dir: "data/train_emails"
   mode: "file"
   batch_size: 16
-  epochs: 3
+  epochs: 10
   learning_rate: 5e-5
   max_seq_length: 512
   weight_decay: 0.01

@@ -73,7 +73,7 @@ class HuggingFaceModel(BaseModel):
             save_steps=self.config.training.save_steps,
             save_total_limit=self.config.training.save_total_limit,
             load_best_model_at_end=self.config.training.load_best_model_at_end,
-            evaluation_strategy="steps" if self.config.training.load_best_model_at_end else "no",
+            eval_strategy="steps" if self.config.training.load_best_model_at_end else "no",
         )
 
         trainer = Trainer(
