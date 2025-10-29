@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, List, Optional
 import yaml
 
-from src.config.types import TrainingMode
+from src.config.types import ModelProvider, TrainingMode
 
 
 @dataclass
@@ -46,14 +46,39 @@ class PathsConfig:
 class TrainingConfig:
     """Model training hyperparameters."""
     model_name: str
-    data_file: Optional[str]
-    data_dir: Optional[str]
-    batch_size: int
-    epochs: int
-    learning_rate: float
-    image_size: Optional[List[int]] = None
+    pretrained_model: str
+
+    # Input data
+    data_file: Optional[str] = None
+    data_dir: Optional[str] = None
     mode: TrainingMode = TrainingMode.FILE
 
+    # Fine-tuning hyperparameters
+    batch_size: int = 16
+    epochs: int = 3
+    learning_rate: float = 5e-5
+    max_seq_length: int = 512
+    weight_decay: float = 0.01
+    warmup_steps: int = 100
+
+    # Optional image size (for vision models)
+    image_size: Optional[List[int]] = None
+
+    # Logging & saving
+    save_model_dir: str = "models/"
+    logging_steps: int = 50
+    save_steps: int = 500
+    evaluation_strategy: str = "steps"
+    save_total_limit: int = 2
+    load_best_model_at_end: bool = True
+
+@dataclass
+class ModelConfig:
+    """Model Config"""
+    provider: ModelProvider
+    name: str
+    temperature: float = 0.7
+    max_tokens: int = 512
 
 @dataclass
 class Config:
@@ -62,6 +87,7 @@ class Config:
     api: APIConfig
     web: WebConfig
     paths: PathsConfig
+    model: ModelConfig
     training: TrainingConfig
 
 
@@ -87,6 +113,7 @@ def load_config(path: str | Path) -> Config:
         api=APIConfig(**raw["api"]),
         web=WebConfig(**raw["web"]),
         paths=PathsConfig(**raw["paths"]),
+        model=ModelConfig(**raw["model"]),
         training=TrainingConfig(**raw["training"]),
     )
 

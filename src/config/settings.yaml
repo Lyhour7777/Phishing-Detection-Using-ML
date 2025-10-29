@@ -11,18 +11,44 @@ web:
   host: "0.0.0.0"
   port: 8501
 
+model:
+  provider: "huggingface"          # options: openai | huggingface | local
+  name: "distilbert-base-uncased"  # base model for fine-tuning
+  temperature: 0.7
+  max_tokens: 512
+
 paths:
   data_dir: "data/"
   model_dir: "models/"
   logs_dir: "logs/"
+  output_dir: "outputs/"           # save checkpoints, tokenizer, config, etc.
 
 training:
-  model_name: "pfd"
-  # Use either a single data file (CSV) or a folder with images
-  data_file: "data/train.csv"
-  data_dir: "data/train_images"
-  mode: "file"        # Options: "file" or "folder"
-  batch_size: 32
-  epochs: 10
-  learning_rate: 0.001
+  model_name: "pfd-finetuned-distilbert"
+  
+  # Pretrained model to fine-tune
+  pretrained_model: "distilbert-base-uncased"
+  
+  # Input data
+  data_file: "data/train.csv"       # labeled CSV with 'text' and 'label' columns
+  data_dir: "data/train_emails"     # optional if you store .txt files
+  mode: "file"                      # "file" or "folder"
+  
+  # Fine-tuning hyperparameters
+  batch_size: 16
+  epochs: 3
+  learning_rate: 5e-5
+  max_seq_length: 512
+  weight_decay: 0.01
+  warmup_steps: 100
+
+  # Optional image size if you use phishing image datasets
   image_size: [128, 128]
+
+  # Logging & saving
+  save_model_dir: "models/"
+  logging_steps: 50
+  save_steps: 500
+  evaluation_strategy: "steps"
+  save_total_limit: 2               # keep only 2 best checkpoints
+  load_best_model_at_end: true
