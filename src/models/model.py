@@ -50,7 +50,7 @@ class HuggingFaceModel(BaseModel):
         self.tokenizer = AutoTokenizer.from_pretrained(self.config.model.name)
         self.model = AutoModelForSequenceClassification.from_pretrained(
             self.config.model.name,
-            num_labels=2  # phishing / safe
+            num_labels=self.config.model.num_classes  # phishing / safe
         )
         self.logger.info(f"Loaded Hugging Face model: {self.config.model.name}")
 
@@ -60,7 +60,7 @@ class HuggingFaceModel(BaseModel):
             output_dir=self.config.training.save_model_dir,
             num_train_epochs=self.config.training.epochs,
             per_device_train_batch_size=self.config.training.batch_size,
-            learning_rate=self.config.training.learning_rate,
+            learning_rate=float(self.config.training.learning_rate),
             logging_steps=self.config.training.logging_steps,
             save_steps=self.config.training.save_steps,
             save_total_limit=self.config.training.save_total_limit,

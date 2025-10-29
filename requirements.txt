@@ -9,7 +9,9 @@ scikit-learn
 # Deep Learning / NLP
 
 torch
+accelerate
 transformers
+transformers[torch]
 
 # API
 

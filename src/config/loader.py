@@ -6,7 +6,7 @@ Uses dataclasses for structured and type-safe configuration.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 import yaml
 
 from src.config.types import ModelProvider, TrainingMode
@@ -40,6 +40,7 @@ class PathsConfig:
     data_dir: str
     model_dir: str
     logs_dir: str
+    output_dir: str
 
 
 @dataclass
@@ -74,11 +75,21 @@ class TrainingConfig:
 
 @dataclass
 class ModelConfig:
-    """Model Config"""
+    """Model configuration."""
     provider: ModelProvider
     name: str
     temperature: float = 0.7
     max_tokens: int = 512
+    num_classes: int = 2
+    labels: Dict[str, int] = None
+
+    def __post_init__(self):
+        # Provide default labels if none are supplied
+        if self.labels is None:
+            self.labels = {"safe": 0, "phishing": 1}
+
+        # Optional: generate reverse mapping
+        self.id2label = {v: k for k, v in self.labels.items()}
 
 @dataclass
 class Config:
@@ -148,9 +159,9 @@ def validate_config(config: Config) -> None:
             print(f"[WARNING] Path for '{name}' is empty in config.")
 
     # Check Training section
-    if config.training.learning_rate <= 0:
+    if float(config.training.learning_rate) <= 0:
         print("[WARNING] Learning rate must be positive.")
-    if config.training.epochs <= 0:
+    if int(config.training.epochs) <= 0:
         print("[WARNING] Epochs must be greater than zero.")
-    if config.training.batch_size <= 0:
+    if int(config.training.batch_size) <= 0:
         print("[WARNING] Batch size must be greater than zero.")
