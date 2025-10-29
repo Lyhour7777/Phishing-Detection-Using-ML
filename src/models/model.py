@@ -1,4 +1,5 @@
 """Base and Hugging Face models for phishing detection."""
+from pathlib import Path
 from typing import List, Optional
 import torch
 from transformers import (
@@ -23,7 +24,7 @@ class BaseModel:
         self.logger = get_logger()
         self.config = config
 
-    def load(self) -> None:
+    def load(self, fine_tuned_path: str | None = None) -> None:
         """Load model and tokenizer. Must be implemented by subclasses."""
         raise NotImplementedError
 
@@ -45,19 +46,26 @@ class HuggingFaceModel(BaseModel):
         self.tokenizer = None
         self.model = None
 
-    def load(self) -> None:
-        """Load pretrained tokenizer and model from Hugging Face."""
+    def load(self, fine_tuned_path: str | None = None) -> None:
+        """Load pretrained tokenizer and model, optionally from fine-tuned path."""
         self.tokenizer = AutoTokenizer.from_pretrained(self.config.model.name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.config.model.name,
-            num_labels=self.config.model.num_classes  # phishing / safe
-        )
-        self.logger.info(f"Loaded Hugging Face model: {self.config.model.name}")
+        if fine_tuned_path and Path(fine_tuned_path).exists():
+            self.model = AutoModelForSequenceClassification.from_pretrained(fine_tuned_path)
+            self.logger.info(f"Loaded fine-tuned model from: {fine_tuned_path}")
+        else:
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                self.config.model.name,
+                num_labels=self.config.model.num_classes
+            )
+            self.logger.info(f"Loaded base model: {self.config.model.name}")
 
-    def train(self, dataset: Optional[object] = None) -> None:
+    def train(self, dataset: Optional[object] = None, resume_checkpoint: str | None = None) -> None:
         """Fine-tune the model on a dataset (HuggingFace Dataset or compatible)."""
+        save_path = Path(self.config.training.save_model_dir) / self.config.training.model_name
+        save_path.mkdir(parents=True, exist_ok=True)
+
         training_args = TrainingArguments(
-            output_dir=self.config.training.save_model_dir,
+            output_dir=str(save_path),
             num_train_epochs=self.config.training.epochs,
             per_device_train_batch_size=self.config.training.batch_size,
             learning_rate=float(self.config.training.learning_rate),
@@ -65,16 +73,19 @@ class HuggingFaceModel(BaseModel):
             save_steps=self.config.training.save_steps,
             save_total_limit=self.config.training.save_total_limit,
             load_best_model_at_end=self.config.training.load_best_model_at_end,
+            evaluation_strategy="steps" if self.config.training.load_best_model_at_end else "no",
         )
+
         trainer = Trainer(
             model=self.model,
             args=training_args,
             train_dataset=dataset
         )
+
         self.logger.info("Starting fine-tuning...")
-        trainer.train()
-        trainer.save_model(self.config.training.save_model_dir)
-        self.logger.info(f"Saved fine-tuned model to {self.config.training.save_model_dir}")
+        trainer.train(resume_from_checkpoint=resume_checkpoint)
+        trainer.save_model(save_path)
+        self.logger.info(f"Saved fine-tuned model to {save_path}")
 
     def predict(self, inputs: List[str]) -> List[int]:
         """Tokenize input texts and return predicted labels."""
@@ -96,10 +107,8 @@ def get_model(config: Config) -> BaseModel:
     if provider == ModelProvider.HUGGINGFACE:
         return HuggingFaceModel(config)
     elif provider == ModelProvider.LOCAL:
-        # implement your local model class later
         raise NotImplementedError("Local model not implemented yet")
     elif provider == ModelProvider.OPENAI:
-        # implement your OpenAI wrapper later
         raise NotImplementedError("OpenAI model not implemented yet")
     else:
         raise ValueError(f"Unknown provider: {config.model.provider}")

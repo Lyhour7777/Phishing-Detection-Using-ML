@@ -11,11 +11,12 @@ from logging import Logger
 import subprocess
 import sys
 import uvicorn
-from scripts import evaluate, run_scraper, train
+from scripts import evaluate, run_scraper
 from src.config.loader import load_config, validate_config
 from src.config.loader import Config
 from src.config.logger import get_logger
 from src.config.types import TrainingMode
+from src.training import phishing_train
 
 
 def run_scraper_step(config: Config, logger: Logger) -> None:
@@ -27,7 +28,7 @@ def run_scraper_step(config: Config, logger: Logger) -> None:
 def train_model_step(config: Config, logger: Logger) -> None:
     """Train the phishing detection model."""
     logger.info(f"Training model '{config.training.model_name}'...")
-    train.train(config=config)
+    phishing_train.train(config=config)
 
 
 def evaluate_model_step(config: Config, logger: Logger) -> None:
