@@ -48,3 +48,6 @@ loguru
 jupyterlab
 matplotlib
 seaborn
+
+
+validators
