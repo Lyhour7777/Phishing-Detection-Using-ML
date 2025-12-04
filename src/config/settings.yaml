@@ -1,5 +1,6 @@
 app:
   name: "Phishing Detection System"
+  enable_logging: true
 
 api:
   host: "0.0.0.0"
@@ -10,18 +11,38 @@ web:
   host: "0.0.0.0"
   port: 8501
 
+model:
+  provider: "huggingface"
+  name: "distilbert-base-uncased"
+  temperature: 0.7
+  max_tokens: 512
+  num_classes: 2
+  labels:
+    safe: 0
+    phishing: 1
+
 paths:
   data_dir: "data/"
   model_dir: "models/"
   logs_dir: "logs/"
+  output_dir: "outputs/"
 
 training:
-  model_name: "pfd"
-  # Use either a single data file (CSV) or a folder with images
+  model_name: "pfd-finetuned-distilbert"
+  pretrained_model: "distilbert-base-uncased"
   data_file: "data/train.csv"
-  data_dir: "data/train_images"
-  mode: "folder"        # Options: "file" or "folder"
-  batch_size: 32
+  data_dir: "data/train_emails"
+  mode: "file"
+  batch_size: 16
   epochs: 10
-  learning_rate: 0.001
+  learning_rate: 5e-5
+  max_seq_length: 512
+  weight_decay: 0.01
+  warmup_steps: 100
+  save_model_dir: "models/"
+  logging_steps: 50
+  save_steps: 500
+  evaluation_strategy: "steps"
+  save_total_limit: 2
+  load_best_model_at_end: false
   image_size: [128, 128]
