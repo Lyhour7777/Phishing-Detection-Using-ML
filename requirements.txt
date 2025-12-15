@@ -49,5 +49,8 @@ jupyterlab
 matplotlib
 seaborn
 
-
 validators
+
+# For Decompose URL
+python-whois
+dnspython
