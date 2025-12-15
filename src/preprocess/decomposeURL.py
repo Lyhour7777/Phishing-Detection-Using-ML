@@ -2,191 +2,209 @@ from urllib.parse import urlparse
 import ipaddress
 import re
 import whois
-from datetime import datetime
 import requests
+from datetime import datetime
 
-def havingIP(url):
-  try:
-    ipaddress.ip_address(url)
-    ip = 1
-  except:
-    ip = 0
-  return ip
-def haveAtSign(url):
-  if "@" in url:
-    at = 1    
-  else:
-    at = 0    
-  return at
-def getLength(url):
-  if len(url) < 54:
-    length = 0            
-  else:
-    length = 1            
-  return length
-def count_subdomain(url):
-    try:
-        parsed = urlparse(url)
-        hostname = parsed.hostname
-        if hostname is None:
+class PhishingFeatureExtractor:
+    FEATURE_NAMES = [
+        "Having IP address",
+        "Having @ symbol",
+        "URL length >= 54",
+        "Multiple subdomains",
+        "Redirection //",
+        "HTTP instead of HTTPS",
+        "URL shortening service",
+        "Prefix/Suffix in domain",
+        "DNS record missing",
+        "Domain age < 6 months",
+        "Domain expires in <6 months",
+        "Iframe detected",
+        "Mouse-over script",
+        "Right-click disabled",
+        "Multiple forwarding"
+    ]
+
+    SHORTENING_SERVICES = re.compile(
+        r"bit\.ly|bitly\.com|tinyurl\.com|is\.gd|v\.gd|t\.co|ow\.ly|"
+        r"buff\.ly|rebrand\.ly|rb\.gy|short\.io|soo\.gd|cutt\.ly|"
+        r"shorte\.st|adf\.ly|lnkd\.in|po\.st|q\.gs|j\.mp"
+    )
+
+    def __init__(self, timeout=5, source="PhishTank + Legitimate URLs", version="1.0"):
+        self.timeout = timeout
+        self.source = source
+        self.version = version
+        self.total_features = len(self.FEATURE_NAMES)
+
+    # ---------- STRING REPRESENTATIONS ----------
+    def __str__(self):
+        return (
+            f"Phishing Feature Extractor v{self.version}\n"
+            f"---------------------------------\n"
+            f"Data source      : {self.source}\n"
+            f"Total features   : {self.total_features}\n"
+            f"Feature groups   : URL, Domain, Content\n"
+        )
+
+    # ---------- URL BASED FEATURES ----------
+    def having_ip(self, url):
+        try:
+            host = urlparse(url).hostname
+            ipaddress.ip_address(host)
             return 1
-        parts = hostname.split('.')
-        if len(parts) <= 2: # domain + TLD
-            subdomain_count = 0
-        else:
-            subdomain_count = len(parts) - 2
-        if subdomain_count <= 1:
+        except:
             return 0
-        else:
+
+    def have_at_sign(self, url):
+        return 1 if "@" in url else 0
+
+    def url_length(self, url):
+        return 1 if len(url) >= 54 else 0
+
+    def count_subdomain(self, url):
+        try:
+            hostname = urlparse(url).hostname
+            if not hostname:
+                return 1
+            return 1 if hostname.count('.') > 2 else 0
+        except:
             return 1
-    except:
-        return 1
-def redirection(url):
-  pos = url.rfind('//')
-  if pos > 6:
-    if pos > 7:
-      return 1
-    else:
-      return 0
-  else:
-    return 0
-def httpDomain(url):
-  domain = urlparse(url).netloc
-  if 'https' in domain:
-    return 1
-  else:
-    return 0
-shortening_services = (
-    r"bit\.ly|bitly\.com|tinyurl\.com|tinyurl\.com|"
-    r"is\.gd|v\.gd|t\.co|ow\.ly|buff\.ly|"
-    r"rebrand\.ly|rb\.gy|short\.io|"
-    r"soo\.gd|cutt\.ly|shorte\.st|adf\.ly|"
-    r"lnkd\.in|po\.st|q\.gs|j\.mp"
-)
-def tinyURL(url):
-    match=re.search(shortening_services,url)
-    if match:
-        return 1
-    else:
-        return 0
-def prefixSuffix(url):
-    if '-' in urlparse(url).netloc:
-        return 1
-    else:
-        return 0
-def domainAge(domain_name):
-  creation_date = domain_name.creation_date
-  expiration_date = domain_name.expiration_date
-  if (isinstance(creation_date,str) or isinstance(expiration_date,str)):
-    try:
-      creation_date = datetime.strptime(creation_date,'%Y-%m-%d')
-      expiration_date = datetime.strptime(expiration_date,"%Y-%m-%d")
-    except:
-      return 1
-  if ((expiration_date is None) or (creation_date is None)):
-      return 1
-  elif ((type(expiration_date) is list) or (type(creation_date) is list)):
-      return 1
-  else:
-    ageofdomain = abs((expiration_date - creation_date).days)
-    if ((ageofdomain/30) < 6):
-      age = 1
-    else:
-      age = 0
-  return age
-def domainEnd(domain_name):
-  expiration_date = domain_name.expiration_date
-  if isinstance(expiration_date,str):
-    try:
-      expiration_date = datetime.strptime(expiration_date,"%Y-%m-%d")
-    except:
-      return 1
-  if (expiration_date is None):
-      return 1
-  elif (type(expiration_date) is list):
-      return 1
-  else:
-    today = datetime.now()
-    end = abs((expiration_date - today).days)
-    if ((end/30) < 6):
-      end = 0
-    else:
-      end = 1
-  return end
-def iframe(response):
-  if response == "":
-      return 1
-  else:
-      if re.findall(r"[<iframe>|<frameBorder>]", response.text):
-          return 0
-      else:
-          return 1
-def mouseOver(response): 
-  if response == "" :
-    return 1
-  else:
-    if re.findall("<script>.+onmouseover.+</script>", response.text):
-      return 1
-    else:
-      return 0
-def rightClick(response):
-  if response == "":
-    return 1
-  else:
-    if re.findall(r"event.button ?== ?2", response.text):
-      return 0
-    else:
-      return 1
-# Checks the number of forwardings (Web_Forwards)    
-def forwarding(response):
-  if response == "":
-    return 1
-  else:
-    if len(response.history) <= 2:
-      return 0
-    else:
-      return 1
 
-#Function to extract features
-def Preprocess(url):
+    def redirection(self, url):
+        return 1 if url.rfind('//') > 7 else 0
 
-  features = []
-  #URL-based (lexical) features (8)
-  features.append(havingIP(url))
-  features.append(haveAtSign(url))
-  features.append(getLength(url))
-  features.append(count_subdomain(url))
-  features.append(redirection(url))
-  features.append(httpDomain(url))
-  features.append(tinyURL(url))
-  features.append(prefixSuffix(url))
-  
-  #Domain based features (3)
-  dns = 0
-  try:
-    domain_name = whois.whois(urlparse(url).netloc)
-  except:
-    dns = 1
+    def http_domain(self, url):
+        return 0 if urlparse(url).scheme == 'https' else 1
 
-  features.append(dns)
-  features.append(1 if dns == 1 else domainAge(domain_name))
-#   features.append(1 if dns == 1 else domainEnd(domain_name))
-  
-  # Content / page-based features Inspect HTML & Javascript (4) 
-  try:
-    response = requests.get(url)
-  except:
-    response = ""
-  features.append(iframe(response))
-  features.append(mouseOver(response))
-  features.append(rightClick(response))
-  features.append(forwarding(response))
-  
-  return features
+    def tiny_url(self, url):
+        return 1 if self.SHORTENING_SERVICES.search(url) else 0
 
-def featureExtraction(label):
-    feature_list = []
-    for result in label:
-        features = Preprocess(result)
-        feature_list.append(features)
-    return feature_list
+    def prefix_suffix(self, url):
+        return 1 if '-' in urlparse(url).netloc else 0
+
+    # ---------- DOMAIN FEATURES (combined) ----------
+    def domain_info(self, domain):
+        """Query WHOIS once for a domain and return info or None."""
+        try:
+            return whois.whois(domain)
+        except:
+            return None
+
+    def domain_age(self, domain_info):
+        try:
+            creation = domain_info.creation_date
+            expiration = domain_info.expiration_date
+
+            if isinstance(creation, list):
+                creation = creation[0]
+            if isinstance(expiration, list):
+                expiration = expiration[0]
+
+            if creation is None or expiration is None:
+                return 1
+
+            age_months = (expiration - creation).days / 30
+            return 1 if age_months < 6 else 0
+        except:
+            return 1
+
+    def domain_end(self, domain_info):
+        try:
+            expiration_date = domain_info.expiration_date
+
+            if isinstance(expiration_date, list):
+                expiration_date = expiration_date[0]
+
+            if expiration_date is None:
+                return 1
+
+            if isinstance(expiration_date, str):
+                for fmt in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S"):
+                    try:
+                        expiration_date = datetime.strptime(expiration_date, fmt)
+                        break
+                    except:
+                        continue
+                else:
+                    return 1
+
+            # Convert aware datetime to naive (remove timezone info)
+            if expiration_date.tzinfo is not None:
+                expiration_date = expiration_date.replace(tzinfo=None)
+
+            remaining_months = (expiration_date - datetime.now()).days / 30
+            return 1 if remaining_months < 6 else 0
+        except:
+            return 1
+
+    # ---------- CONTENT BASED FEATURES ----------
+    def get_response(self, url):
+        try:
+            return requests.get(url, timeout=self.timeout)
+        except:
+            return None
+
+    def iframe(self, response):
+        if not response:
+            return 1
+        return 0 if re.search(r"<iframe|frameborder", response.text, re.I) else 1
+
+    def mouse_over(self, response):
+        if not response:
+            return 1
+        return 1 if re.search(r"onmouseover", response.text, re.I) else 0
+
+    def right_click(self, response):
+        if not response:
+            return 1
+        return 0 if re.search(r"event\.button\s*==\s*2", response.text) else 1
+
+    def forwarding(self, response):
+        if not response:
+            return 1
+        return 1 if len(response.history) > 2 else 0
+
+    # ---------- MAIN PIPELINE ----------
+    def extract(self, url):
+        features = []
+
+        # URL-based (8)
+        features.extend([
+            self.having_ip(url),
+            self.have_at_sign(url),
+            self.url_length(url),
+            self.count_subdomain(url),
+            self.redirection(url),
+            self.http_domain(url),
+            self.tiny_url(url),
+            self.prefix_suffix(url)
+        ])
+
+        # DOMAIN FEATURES
+        domain = urlparse(url).netloc
+        domain_info = self.domain_info(domain)
+        dns_fail = 1 if domain_info is None else 0
+        features.append(dns_fail)
+        # Age and End only if WHOIS succeeded
+        features.append(1 if dns_fail else self.domain_age(domain_info))
+        features.append(1 if dns_fail else self.domain_end(domain_info))
+
+        # CONTENT FEATURES (4)
+        response = self.get_response(url)
+        features.extend([
+            self.iframe(response),
+            self.mouse_over(response),
+            self.right_click(response),
+            self.forwarding(response)
+        ])
+
+        return features
+
+    def batch_extract(self, urls):
+        return [self.extract(url) for url in urls]
+
+    # ---------- EXPLAIN FEATURES ----------
+    def explain(self, url):
+        """Return dictionary of feature names and values."""
+        values = self.extract(url)
+        return dict(zip(self.FEATURE_NAMES, values))
