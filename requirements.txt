@@ -53,4 +53,4 @@ validators
 
 # For Decompose URL
 python-whois
-dnspython
+requests
