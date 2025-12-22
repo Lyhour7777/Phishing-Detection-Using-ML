@@ -13,7 +13,7 @@ web:
 
 model:
   provider: "huggingface"
-  name: "distilbert-base-uncased"
+  name: "phishing_rf"
   temperature: 0.7
   max_tokens: 512
   num_classes: 2
