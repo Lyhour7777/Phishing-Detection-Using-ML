@@ -166,39 +166,43 @@ class PhishingFeatureExtractor:
 
     # ---------- MAIN PIPELINE ----------
     def extract(self, url):
-        features = []
+        try:
+            features = []
 
-        # URL-based (8)
-        features.extend([
-            self.having_ip(url),
-            self.have_at_sign(url),
-            self.url_length(url),
-            self.count_subdomain(url),
-            self.redirection(url),
-            self.http_domain(url),
-            self.tiny_url(url),
-            self.prefix_suffix(url)
-        ])
+            # URL-based (8)
+            features.extend([
+                self.having_ip(url),
+                self.have_at_sign(url),
+                self.url_length(url),
+                self.count_subdomain(url),
+                self.redirection(url),
+                self.http_domain(url),
+                self.tiny_url(url),
+                self.prefix_suffix(url)
+            ])
 
-        # DOMAIN FEATURES
-        domain = urlparse(url).netloc
-        domain_info = self.domain_info(domain)
-        dns_fail = 1 if domain_info is None else 0
-        features.append(dns_fail)
-        # Age and End only if WHOIS succeeded
-        features.append(1 if dns_fail else self.domain_age(domain_info))
-        features.append(1 if dns_fail else self.domain_end(domain_info))
+            # DOMAIN FEATURES
+            domain = urlparse(url).netloc
+            domain_info = self.domain_info(domain)
+            dns_fail = 1 if domain_info is None else 0
+            features.append(dns_fail)
+            # Age and End only if WHOIS succeeded
+            features.append(1 if dns_fail else self.domain_age(domain_info))
+            features.append(1 if dns_fail else self.domain_end(domain_info))
 
-        # CONTENT FEATURES (4)
-        response = self.get_response(url)
-        features.extend([
-            self.iframe(response),
-            self.mouse_over(response),
-            self.right_click(response),
-            self.forwarding(response)
-        ])
+            # CONTENT FEATURES (4)
+            response = self.get_response(url)
+            features.extend([
+                self.iframe(response),
+                self.mouse_over(response),
+                self.right_click(response),
+                self.forwarding(response)
+            ])
 
-        return features
+            return features
+        except Exception as e:
+            # Return None so caller can handle it
+            raise RuntimeError(f"Extractor failed for URL: {url} | {e}")
 
     def batch_extract(self, urls):
         return [self.extract(url) for url in urls]

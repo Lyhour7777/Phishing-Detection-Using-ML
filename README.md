@@ -96,6 +96,7 @@ python run.py --evaluate    # Evaluate the model
 python run.py --api         # Launch FastAPI server
 python run.py --web         # Launch Streamlit dashboard
 python run.py --all         # Run all steps sequentially
+python run.py --extractor --phishing-n [number] --legit-n [number]
 ```
 
 ### 2. FastAPI Endpoints

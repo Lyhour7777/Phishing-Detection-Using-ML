@@ -23,6 +23,8 @@ model:
 
 paths:
   data_dir: "data/"
+  input_csv: "url.csv"
+  output_csv: "url_extractor.csv"
   model_dir: "models/"
   logs_dir: "logs/"
   output_dir: "outputs/"
