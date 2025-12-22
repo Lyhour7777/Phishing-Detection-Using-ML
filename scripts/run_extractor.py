@@ -11,8 +11,8 @@ def extractor(config: Config, phishing_n: int = None, legit_n: int = None):
     data = pd.read_csv(data_path)
 
     if phishing_n is not None and legit_n is not None:
-        phishing_sample = data[data['label'] == 1].sample(n=phishing_n, random_state=42)
-        legit_sample = data[data['label'] == 0].sample(n=legit_n, random_state=42)
+        phishing_sample = data[data['label'] == 0].sample(n=phishing_n, random_state=42)
+        legit_sample = data[data['label'] == 1].sample(n=legit_n, random_state=42)
         dataset = pd.concat([phishing_sample, legit_sample]).reset_index(drop=True)
     else:
         dataset = data.copy().reset_index(drop=True)
