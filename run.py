@@ -11,7 +11,7 @@ from logging import Logger
 import subprocess
 import sys
 import uvicorn
-from scripts import evaluate, run_scraper
+from scripts import evaluate, run_scraper, run_extractor
 from src.config.loader import load_config, validate_config
 from src.config.loader import Config
 from src.config.logger import get_logger
@@ -23,6 +23,11 @@ def run_scraper_step(config: Config, logger: Logger) -> None:
     """Run the data scraper step."""
     logger.info("Running scraper...")
     run_scraper.scraper(config=config)
+
+def run_extractor_step(config: Config, logger: Logger, phishing_n: int = None, legit_n: int = None) -> None:
+    """Run the feature extractor step."""
+    logger.info(f"Running feature extractor (phishing_n={phishing_n}, legit_n={legit_n})...")
+    run_extractor.extractor(config=config, phishing_n=phishing_n, legit_n=legit_n)
 
 
 def train_model_step(config: Config, logger: Logger) -> None:
@@ -77,7 +82,24 @@ def main(argv: list[str] | None = None) -> None:
         help="Path to YAML config file",
         metavar=""
     )
+    # script
     parser.add_argument("--scraper", action="store_true", help="Run scraper")
+    parser.add_argument("--extractor", action="store_true", help="Run feature extractor")
+
+    parser.add_argument(
+        "--phishing-n",
+        type=int,
+        default=None,
+        help="Number of phishing URLs to sample (used with --extractor)"
+    )
+
+    parser.add_argument(
+        "--legit-n",
+        type=int,
+        default=None,
+        help="Number of legitimate URLs to sample (used with --extractor)"
+    )
+
     parser.add_argument("--train", action="store_true", help="Train model")
     parser.add_argument(
         "--mode",
@@ -92,6 +114,9 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
 
+    if (args.phishing_n is not None or args.legit_n is not None) and not args.extractor:
+        parser.error("--phishing-n and --legit-n can only be used with --extractor")
+
     config = load_config(args.config_path)
     validate_config(config)
     logger = get_logger(config, enable=config.app.enable_logging)
@@ -99,12 +124,26 @@ def main(argv: list[str] | None = None) -> None:
     if args.all:
         logger.info("User selected --all: running scraper, train, and evaluate")
         run_scraper_step(config, logger=logger)
+        run_extractor_step(
+            config,
+            logger=logger,
+            phishing_n=args.phishing_n,
+            legit_n=args.legit_n
+        )
         train_model_step(config, logger=logger)
         evaluate_model_step(config, logger=logger)
     else:
         if args.scraper:
             logger.info("User selected --scraper: running scraper")
             run_scraper_step(config, logger=logger)
+        if args.extractor:
+            logger.info("User selected --extractor: running feature extractor")
+            run_extractor_step(
+                config,
+                logger=logger,
+                phishing_n=args.phishing_n,
+                legit_n=args.legit_n
+            )
         if args.train:
             logger.info("User selected --train: training model")
             train_model_step(config, logger=logger)

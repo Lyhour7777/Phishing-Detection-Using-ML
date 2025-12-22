@@ -38,6 +38,8 @@ class WebConfig:
 class PathsConfig:
     """Directory paths for data, models, and logs."""
     data_dir: str
+    input_csv: str
+    output_csv: str
     model_dir: str
     logs_dir: str
     output_dir: str
@@ -144,6 +146,8 @@ def load_config(path: str | Path = "src/config/settings.yaml") -> Config:
                 },
                 "paths": {
                     "data_dir": "data/",
+                    "input_csv": "url.csv",
+                    "output_csv": "url_extractor.csv",
                     "model_dir": "models/",
                     "logs_dir": "logs/",
                     "output_dir": "outputs/"
